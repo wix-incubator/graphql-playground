@@ -55,6 +55,10 @@ const FilmType = new GraphQLObjectType({
     },
     release_date: {
       type: GraphQLString,
+    },
+    characters: {
+      type: new GraphQLList(PersonType),
+      resolve: (film, args, {loaders}) => loaders.person.loadByUrl(film.characters)
     }
   }),
   interfaces: [nodeInterface],

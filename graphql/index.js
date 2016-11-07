@@ -34,11 +34,17 @@ function getPerson(id) {
   return getJSONFromRelativeURL(`/people/${id}/`);
 }
 
+function getPersonByUrl(url) {
+  return fetch(`${url}?format=json`)
+    .then(res => res.json());
+}
+
 const app = express();
 
 app.use(graphqlHTTP(req => {
   const cacheMap = new Map();
   const personCacheMap = new Map();
+  const innerPersonCacheMap = new Map();
 
   const peopleLoader =
     new DataLoader(keys => Promise.all(keys.map(getPeople)), {personCacheMap});
@@ -48,6 +54,9 @@ app.use(graphqlHTTP(req => {
       cacheKeyFn: key => `/people/${key}/`,
       personCacheMap,
     });
+
+  const personByUrlLoader =
+    new DataLoader(keys => Promise.all(keys.map(getPersonByUrl)), {innerPersonCacheMap});
 
   const filmsLoader =
     new DataLoader(keys => Promise.all(keys.map(getFilms)), {cacheMap});
@@ -62,6 +71,7 @@ app.use(graphqlHTTP(req => {
     new DataLoader(keys => Promise.all(keys.map(getFilmByURL)), {cacheMap});
 
   personLoader.loadAll = peopleLoader.load.bind(peopleLoader, '__all__');
+  personLoader.loadByUrl = personByUrlLoader.loadMany.bind(personByUrlLoader);
 
   filmLoader.loadAll = filmsLoader.load.bind(filmsLoader, '__all__');
   filmLoader.loadByUrl = filmByURLLoader.load.bind(filmByURLLoader);
