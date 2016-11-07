@@ -5,45 +5,49 @@ import fetch from 'node-fetch';
 import graphqlHTTP from 'express-graphql';
 import schema from './schema';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://swapi.co/api';
 
 function getJSONFromRelativeURL(relativeURL) {
-  return fetch(`${BASE_URL}${relativeURL}`)
+  return fetch(`${BASE_URL}${relativeURL}?format=json`)
     .then(res => res.json());
 }
 
-function getPeople() {
-  return getJSONFromRelativeURL('/people/')
-    .then(json => json.people);
+function getFilms() {
+  return getJSONFromRelativeURL('/films/')
+    .then(json => json.results);
 }
 
-function getPerson(id) {
-  return getPersonByURL(`/people/${id}/`);
+function getFilm(id) {
+  return getJSONFromRelativeURL(`/films/${id}/`);
 }
 
-function getPersonByURL(relativeURL) {
-  return getJSONFromRelativeURL(relativeURL)
-    .then(json => json.person);
+function getFilmByURL(relativeURL) {
+  return getJSONFromRelativeURL(relativeURL);
 }
 
 const app = express();
 
 app.use(graphqlHTTP(req => {
   const cacheMap = new Map();
-  const peopleLoader =
-    new DataLoader(keys => Promise.all(keys.map(getPeople)), {cacheMap});
-  const personLoader =
-    new DataLoader(keys => Promise.all(keys.map(getPerson)), {
-      cacheKeyFn: key => `/people/${key}/`,
+
+  const filmsLoader =
+    new DataLoader(keys => Promise.all(keys.map(getFilms)), {cacheMap});
+
+  const filmLoader =
+    new DataLoader(keys => Promise.all(keys.map(getFilm)), {
+      cacheKeyFn: key => `/films/${key}/`,
       cacheMap,
     });
-  const personByURLLoader =
-    new DataLoader(keys => Promise.all(keys.map(getPersonByURL)), {cacheMap});
-  personLoader.loadAll = peopleLoader.load.bind(peopleLoader, '__all__');
-  personLoader.loadByURL = personByURLLoader.load.bind(personByURLLoader);
-  personLoader.loadManyByURL =
-    personByURLLoader.loadMany.bind(personByURLLoader);
-  const loaders = {person: personLoader};
+
+  const filmByURLLoader =
+    new DataLoader(keys => Promise.all(keys.map(getFilmByURL)), {cacheMap});
+
+  filmLoader.loadAll = filmsLoader.load.bind(filmsLoader, '__all__');
+  filmLoader.loadByUrl = filmByURLLoader.load.bind(filmByURLLoader);
+
+  const loaders = {
+    films: filmLoader
+  };
   return {
     context: {loaders},
     graphiql: true,
