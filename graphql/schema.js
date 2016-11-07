@@ -22,11 +22,17 @@ const {
     if (type === 'Film') {
       return loaders.films.load(id);
     }
+    if (type === 'Person') {
+      return loaders.person.load(id);
+    }
   },
   // A method that maps from an object to a type
   (obj) => {
     if (obj.hasOwnProperty('title')) {
       return FilmType;
+    }
+    if (obj.hasOwnProperty('name')) {
+      return PersonType;
     }
   }
 );
@@ -54,19 +60,53 @@ const FilmType = new GraphQLObjectType({
   interfaces: [nodeInterface],
 });
 
+const PersonType = new GraphQLObjectType({
+  name: 'Person',
+  fields: () => ({
+    id: globalIdField('Person'),
+    name: {
+      type: GraphQLString,
+    },
+    height: {
+      type: GraphQLString,
+    },
+    mass: {
+      type: GraphQLString,
+    },
+    hair_color: {
+      type: GraphQLString,
+    },
+    gender: {
+      type: GraphQLString,
+    }
+  }),
+  interfaces: [nodeInterface],
+});
+
 const QueryType = new GraphQLObjectType({
   name: 'Query',
   description: 'The root of all... queries',
   fields: () => ({
     node: nodeField,
+    allPeople: {
+      type: new GraphQLList(PersonType),
+      resolve: (root, args, {loaders}) => loaders.person.loadAll(),
+    },
     allFilms: {
       type: new GraphQLList(FilmType),
       resolve: (root, args, {loaders}) => loaders.films.loadAll(),
     },
+    person: {
+      type: PersonType,
+      args: {
+        id: {type: new GraphQLNonNull(GraphQLID)},
+      },
+      resolve: (root, args, {loaders}) => loaders.person.load(args.id),
+    },
     film : {
       type: FilmType,
       args: {
-        id: {type: new GraphQLNonNull(GraphQLID)},
+        id: {type: new GraphQLNonNull(GraphQLID)}
       },
       resolve: (root, args, {loaders}) => loaders.films.load(args.id),
     }
