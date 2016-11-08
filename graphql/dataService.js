@@ -41,6 +41,7 @@ function getPersonByUrl(absoluteUrl) {
 }
 
 export default {
+  BASE_URL,
   getFilms,
   getFilm,
   getFilmByURL,
