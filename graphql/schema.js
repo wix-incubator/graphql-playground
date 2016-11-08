@@ -85,7 +85,7 @@ const PersonType = new GraphQLObjectType({
     },
     films: {
       type: new GraphQLList(FilmType),
-      resolve: (person, args, {loaders}) => loaders.films.loadByUrl(person.films)
+      resolve: (person, args, {loaders}) => loaders.film.loadByUrl(person.films)
     }
   }),
   interfaces: [nodeInterface],
@@ -102,7 +102,7 @@ const QueryType = new GraphQLObjectType({
     },
     allFilms: {
       type: new GraphQLList(FilmType),
-      resolve: (root, args, {loaders}) => loaders.films.loadAll(),
+      resolve: (root, args, {loaders}) => loaders.film.loadAll(),
     },
     person: {
       type: PersonType,
@@ -116,7 +116,7 @@ const QueryType = new GraphQLObjectType({
       args: {
         id: {type: new GraphQLNonNull(GraphQLID)}
       },
-      resolve: (root, args, {loaders}) => loaders.films.load(args.id),
+      resolve: (root, args, {loaders}) => loaders.film.load(args.id),
     }
   }),
 });
