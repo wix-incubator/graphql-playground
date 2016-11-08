@@ -1,74 +1,34 @@
 import DataLoader from 'dataloader';
 
 import express from 'express';
-import fetch from 'node-fetch';
 import graphqlHTTP from 'express-graphql';
 import schema from './schema';
-
-const BASE_URL = 'http://swapi.co/api';
-
-function getJSONFromRelativeURL(relativeURL) {
-  console.log('GET RELATIVE', relativeURL);
-  return fetch(`${BASE_URL}${relativeURL}?format=json`)
-    .then(res => res.json());
-}
-
-function getJSONFromAbsoluteURL(absoluteUrl) {
-  console.log('GET ABSOLUTE', absoluteUrl);
-  return fetch(`${absoluteUrl}?format=json`)
-    .then(res => res.json());
-}
-
-function getFilms() {
-  return getJSONFromRelativeURL('/films/')
-    .then(json => json.results);
-}
-
-function getFilm(id) {
-  return getJSONFromRelativeURL(`/films/${id}/`);
-}
-
-function getFilmByURL(absoluteUrl) {
-  return getJSONFromAbsoluteURL(absoluteUrl);
-}
-
-function getPeople() {
-  return getJSONFromRelativeURL('/people/')
-    .then(json => json.results);
-}
-
-function getPerson(id) {
-  return getJSONFromRelativeURL(`/people/${id}/`);
-}
-
-function getPersonByUrl(absoluteUrl) {
-  return getJSONFromAbsoluteURL(absoluteUrl);
-}
+import DataService from './dataService';
 
 const app = express();
 
 app.use(graphqlHTTP(req => {
   const peopleLoader =
-    new DataLoader(keys => Promise.all(keys.map(getPeople)));
+    new DataLoader(keys => Promise.all(keys.map(DataService.getPeople)));
 
   const personLoader =
-    new DataLoader(keys => Promise.all(keys.map(getPerson)), {
+    new DataLoader(keys => Promise.all(keys.map(DataService.getPerson)), {
       cacheKeyFn: key => `/people/${key}/`,
     });
 
   const personByUrlLoader =
-    new DataLoader(keys => Promise.all(keys.map(getPersonByUrl)));
+    new DataLoader(keys => Promise.all(keys.map(DataService.getPersonByUrl)));
 
   const filmsLoader =
-    new DataLoader(keys => Promise.all(keys.map(getFilms)));
+    new DataLoader(keys => Promise.all(keys.map(DataService.getFilms)));
 
   const filmLoader =
-    new DataLoader(keys => Promise.all(keys.map(getFilm)), {
+    new DataLoader(keys => Promise.all(keys.map(DataService.getFilm)), {
       cacheKeyFn: key => `/films/${key}/`,
     });
 
   const filmByURLLoader =
-    new DataLoader(keys => Promise.all(keys.map(getFilmByURL)));
+    new DataLoader(keys => Promise.all(keys.map(DataService.getFilmByURL)));
 
   personLoader.loadAll = peopleLoader.load.bind(peopleLoader, '__all__');
   personLoader.loadByUrl = personByUrlLoader.loadMany.bind(personByUrlLoader);
