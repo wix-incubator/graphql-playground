@@ -12,6 +12,11 @@ function getJSONFromRelativeURL(relativeURL) {
     .then(res => res.json());
 }
 
+function getJSONFromAbsoluteURL(absoluteUrl) {
+  return fetch(`${absoluteUrl}?format=json`)
+    .then(res => res.json());
+}
+
 function getFilms() {
   return getJSONFromRelativeURL('/films/')
     .then(json => json.results);
@@ -21,8 +26,8 @@ function getFilm(id) {
   return getJSONFromRelativeURL(`/films/${id}/`);
 }
 
-function getFilmByURL(relativeURL) {
-  return getJSONFromRelativeURL(relativeURL);
+function getFilmByURL(absoluteUrl) {
+  return getJSONFromAbsoluteURL(absoluteUrl);
 }
 
 function getPeople() {
@@ -34,15 +39,15 @@ function getPerson(id) {
   return getJSONFromRelativeURL(`/people/${id}/`);
 }
 
-function getPersonByUrl(url) {
-  return fetch(`${url}?format=json`)
-    .then(res => res.json());
+function getPersonByUrl(absoluteUrl) {
+  return getJSONFromAbsoluteURL(absoluteUrl);
 }
 
 const app = express();
 
 app.use(graphqlHTTP(req => {
-  const cacheMap = new Map();
+  const filmCacheMap = new Map();
+  const filmAbsoluteCacheMap = new Map();
   const personCacheMap = new Map();
   const innerPersonCacheMap = new Map();
 
@@ -59,22 +64,22 @@ app.use(graphqlHTTP(req => {
     new DataLoader(keys => Promise.all(keys.map(getPersonByUrl)), {innerPersonCacheMap});
 
   const filmsLoader =
-    new DataLoader(keys => Promise.all(keys.map(getFilms)), {cacheMap});
+    new DataLoader(keys => Promise.all(keys.map(getFilms)), {filmCacheMap});
 
   const filmLoader =
     new DataLoader(keys => Promise.all(keys.map(getFilm)), {
       cacheKeyFn: key => `/films/${key}/`,
-      cacheMap,
+      filmCacheMap,
     });
 
   const filmByURLLoader =
-    new DataLoader(keys => Promise.all(keys.map(getFilmByURL)), {cacheMap});
+    new DataLoader(keys => Promise.all(keys.map(getFilmByURL)), {filmAbsoluteCacheMap});
 
   personLoader.loadAll = peopleLoader.load.bind(peopleLoader, '__all__');
   personLoader.loadByUrl = personByUrlLoader.loadMany.bind(personByUrlLoader);
 
   filmLoader.loadAll = filmsLoader.load.bind(filmsLoader, '__all__');
-  filmLoader.loadByUrl = filmByURLLoader.load.bind(filmByURLLoader);
+  filmLoader.loadByUrl = filmByURLLoader.loadMany.bind(filmByURLLoader);
 
   const loaders = {
     films: filmLoader,

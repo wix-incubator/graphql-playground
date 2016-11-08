@@ -82,6 +82,10 @@ const PersonType = new GraphQLObjectType({
     },
     gender: {
       type: GraphQLString,
+    },
+    films: {
+      type: new GraphQLList(FilmType),
+      resolve: (person, args, {loaders}) => loaders.films.loadByUrl(person.films)
     }
   }),
   interfaces: [nodeInterface],
