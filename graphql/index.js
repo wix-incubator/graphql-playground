@@ -8,11 +8,13 @@ import schema from './schema';
 const BASE_URL = 'http://swapi.co/api';
 
 function getJSONFromRelativeURL(relativeURL) {
+  console.log('GET RELATIVE', relativeURL);
   return fetch(`${BASE_URL}${relativeURL}?format=json`)
     .then(res => res.json());
 }
 
 function getJSONFromAbsoluteURL(absoluteUrl) {
+  console.log('GET ABSOLUTE', absoluteUrl);
   return fetch(`${absoluteUrl}?format=json`)
     .then(res => res.json());
 }
