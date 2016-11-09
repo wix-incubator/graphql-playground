@@ -6,41 +6,10 @@ import {
   GraphQLSchema,
   GraphQLString,
 } from 'graphql';
-import {
-  fromGlobalId,
-  globalIdField,
-  nodeDefinitions,
-} from 'graphql-relay';
-
-const {
-  nodeField,
-  nodeInterface,
-} = nodeDefinitions(
-  // A method that maps from a global id to an object
-  (globalId, {loaders}) => {
-    const {id, type} = fromGlobalId(globalId);
-    if (type === 'Film') {
-      return loaders.films.load(id);
-    }
-    if (type === 'Person') {
-      return loaders.person.load(id);
-    }
-  },
-  // A method that maps from an object to a type
-  (obj) => {
-    if (obj.hasOwnProperty('title')) {
-      return FilmType;
-    }
-    if (obj.hasOwnProperty('name')) {
-      return PersonType;
-    }
-  }
-);
 
 const FilmType = new GraphQLObjectType({
   name: 'Film',
   fields: () => ({
-    id: globalIdField('Film'),
     title: {
       type: GraphQLString,
     },
@@ -61,13 +30,11 @@ const FilmType = new GraphQLObjectType({
       resolve: (film, args, {loaders}) => loaders.person.loadByUrl(film.characters)
     }
   }),
-  interfaces: [nodeInterface],
 });
 
 const PersonType = new GraphQLObjectType({
   name: 'Person',
   fields: () => ({
-    id: globalIdField('Person'),
     name: {
       type: GraphQLString,
     },
@@ -88,14 +55,12 @@ const PersonType = new GraphQLObjectType({
       resolve: (person, args, {loaders}) => loaders.film.loadByUrl(person.films)
     }
   }),
-  interfaces: [nodeInterface],
 });
 
 const QueryType = new GraphQLObjectType({
   name: 'Query',
   description: 'The root of all... queries',
   fields: () => ({
-    node: nodeField,
     allPeople: {
       type: new GraphQLList(PersonType),
       resolve: (root, args, {loaders}) => loaders.person.loadAll(),
