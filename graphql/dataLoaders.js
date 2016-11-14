@@ -4,20 +4,6 @@ import DataService from './dataService';
 const filmCache = new Map();
 const personCache = new Map();
 
-const peopleLoader =
-  new DataLoader(keys => Promise.all(keys.map(DataService.getPeople)));
-
-const personLoader =
-  new DataLoader(keys => Promise.all(keys.map(DataService.getPerson)), {
-    cacheKeyFn: key => `${DataService.BASE_URL}/people/${key}/`,
-    cacheMap: personCache
-  });
-
-const personByUrlLoader =
-  new DataLoader(keys => Promise.all(keys.map(DataService.getPersonByUrl)), {
-    cacheMap: personCache
-  });
-
 const filmsLoader =
   new DataLoader(keys => Promise.all(keys.map(DataService.getFilms)));
 
@@ -32,7 +18,13 @@ const filmByURLLoader =
     cacheMap: filmCache
   });
 
-personLoader.loadAll = peopleLoader.load.bind(peopleLoader, '__all__');
+const personLoader = new DataLoader(keys => Promise.all(keys.map(DataService.getPerson)));
+
+const personByUrlLoader =
+  new DataLoader(keys => Promise.all(keys.map(DataService.getPersonByUrl)), {
+    cacheMap: personCache
+  });
+
 personLoader.loadByUrl = personByUrlLoader.loadMany.bind(personByUrlLoader);
 
 filmLoader.loadAll = filmsLoader.load.bind(filmsLoader, '__all__');

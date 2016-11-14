@@ -2,6 +2,7 @@ import {
   GraphQLID,
   GraphQLList,
   GraphQLNonNull,
+  GraphQLInt,
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLString,
@@ -13,8 +14,9 @@ const FilmType = new GraphQLObjectType({
     title: {
       type: GraphQLString,
     },
-    opening_crawl: {
+    description: {
       type: GraphQLString,
+      resolve: (film) => film.opening_crawl,
     },
     director: {
       type: GraphQLString,
@@ -26,14 +28,20 @@ const FilmType = new GraphQLObjectType({
       type: GraphQLString,
     },
     characters: {
-      type: new GraphQLList(PersonType),
-      resolve: (film, args, {loaders}) => loaders.person.loadByUrl(film.characters)
+      type: new GraphQLList(CharacterType),
+      args: {
+        first: {type: new GraphQLNonNull(GraphQLInt)}
+      },
+      resolve: (film, args, {loaders}) => {
+        const firstChars = film.characters.slice(0, args.first);
+        return loaders.person.loadByUrl(firstChars);
+      }
     }
   }),
 });
 
-const PersonType = new GraphQLObjectType({
-  name: 'Person',
+const CharacterType = new GraphQLObjectType({
+  name: 'Character',
   fields: () => ({
     name: {
       type: GraphQLString,
@@ -59,18 +67,15 @@ const PersonType = new GraphQLObjectType({
 
 const QueryType = new GraphQLObjectType({
   name: 'Query',
-  description: 'The root of all... queries',
   fields: () => ({
-    allPeople: {
-      type: new GraphQLList(PersonType),
-      resolve: (root, args, {loaders}) => loaders.person.loadAll(),
-    },
     allFilms: {
       type: new GraphQLList(FilmType),
       resolve: (root, args, {loaders}) => loaders.film.loadAll(),
     },
-    person: {
-      type: PersonType,
+
+    // these aren't used
+    character: {
+      type: CharacterType,
       args: {
         id: {type: new GraphQLNonNull(GraphQLID)},
       },
