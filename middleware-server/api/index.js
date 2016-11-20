@@ -17,27 +17,34 @@ export default router;
 
 function getFilmList(loaders, charCount) {
   return loaders.film.loadAll()
+    .then(films => limitCharacterCountInFilms(films, charCount))
     .then(films => includeCharactersToFilms(loaders, films, charCount))
     ;
 }
 
-function includeCharactersToFilms(loaders, films, charCount) {
-  const charsToGet = map(films, film => film.characters.slice(0, charCount));
+function limitCharacterCountInFilms(films, charCount) {
+  return map(films, film => {
+    const characters = film.characters.slice(0, charCount);
+    return {...film, characters};
+  });
+}
+
+function includeCharactersToFilms(loaders, films) {
+  const charsToGet = map(films, film => film.characters);
   const charsPromises = map(charsToGet, charUrls => loaders.film.loadByUrl(charUrls));
 
   return Promise.all(charsPromises)
-    .then(resolvedCharacters => combineCharsToFilms(charCount, flatten(resolvedCharacters), films));
+    .then(resolvedCharacters => combineCharsToFilms(flatten(resolvedCharacters), films));
 }
 
-function combineCharsToFilms(charCount, allCharacters, films) {
+function combineCharsToFilms(allCharacters, films) {
   return map(films, (film, filmIndex) => {
-    let characterUrls = film.characters.slice(0, charCount);
+    let characterUrls = film.characters;
 
-    const charList = map(characterUrls, (characterUrl, charIndex) => {
+    const characters = map(characterUrls, (characterUrl, charIndex) => {
       return find(allCharacters, char => char.url === characterUrl)
     });
 
-    film.characters = charList;
-    return film;
+    return {...film, characters};
   });
 }
