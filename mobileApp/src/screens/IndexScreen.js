@@ -72,8 +72,12 @@ export default class IndexScreen extends Component {
   }
 
   setApiData(result) {
+    const preparedData = result.map(film => {
+      return {...film, description: film.opening_crawl}
+    });
+
     this.setState({
-      films: result,
+      films: preparedData,
       isLoading: false
     });
   }
@@ -104,7 +108,7 @@ export default class IndexScreen extends Component {
     return (
       <View style={styles.film} key={index}>
         <View><Text style={styles.filmTitle}>{film.title}</Text></View>
-        <View><Text style={styles.filmDesc}>{film.title}</Text></View>
+        <View><Text style={styles.filmDesc}>{film.description}</Text></View>
         <View>
           <Text style={styles.filmCharacters}>
             3 Characters: {characterNames.join(', ')}
